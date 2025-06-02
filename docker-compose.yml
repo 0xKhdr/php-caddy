@@ -1,0 +1,51 @@
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    user: "${UID:-1000}:${GID:-1000}"
+    volumes:
+      - ./src:/var/www/html
+      - ./compose/caddy/Caddyfile:/etc/caddy/Caddyfile
+      - ./logs/caddy:/var/log/caddy
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - php
+    healthcheck:
+      test: [ "CMD", "sh", "-c", "netstat -tuln | grep :80 || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      app-network:
+        aliases:
+            - php.caddy.localhost
+
+  php:
+    build:
+      context: .
+      dockerfile: ./compose/php/Dockerfile
+    scale: 3
+    user: "${UID:-1000}:${GID:-1000}"
+    volumes:
+      - ./src:/var/www/html
+      - ./compose/php/php.ini:/usr/local/etc/php/php.ini
+    healthcheck:
+      test: [ "CMD", "sh", "-c", "netstat -tuln | grep :9000 || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  caddy_data:
+  caddy_config:
+  db_data:
