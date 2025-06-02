@@ -1,77 +1,147 @@
 {
-    debug
+    # Global options
     auto_https off
+    admin off
 }
 
 php.caddy.localhost:80 {
     root * /var/www/html/public
-    encode gzip zstd
 
+    # Optimized encoding for APIs (JSON responses)
+    encode {
+        gzip 6
+        zstd
+    }
+
+    # Security headers optimized for APIs
     header {
+        # Remove server identification
         Server -Server
-        Strict-Transport-Security max-age=31536000
+
+        # Security headers
         X-Content-Type-Options nosniff
         X-Frame-Options DENY
         X-XSS-Protection 1; mode=block
         Referrer-Policy strict-origin-when-cross-origin
-        Content-Security-Policy default-src self
+
+        # CORS for API access (adjust origins as needed)
+        Access-Control-Allow-Origin *
+        Access-Control-Allow-Methods GET, POST, PUT, DELETE, OPTIONS, PATCH
+        Access-Control-Allow-Headers Content-Type, Authorization, X-Requested-With
+        Access-Control-Max-Age 3600
     }
 
+    # Handle OPTIONS requests for CORS preflight
+    @options method OPTIONS
+    respond @options 204
+
+    # PHP-FPM with optimizations for Laravel
     php_fastcgi php:9000 {
-        lb_policy ip_hash
         root /var/www/html/public
-        resolve_root_symlink
-        health_uri /healthcheck.php
+
+        # Load balancing for multiple PHP containers
+        lb_policy ip_hash
+
+        # Timeouts optimized for API responses
+        read_timeout 60s
+        write_timeout 60s
+        dial_timeout 5s
+
+        # Health check for PHP-FPM
+        health_uri /ping
         health_interval 30s
         health_timeout 5s
         health_status 200
+
+        # Resolve symlinks (common in Laravel)
+        resolve_root_symlink
+
+        # Pass additional FastCGI params for Laravel
+        env SCRIPT_FILENAME {root}/index.php
     }
 
-    handle {
-        @php {
-            path *.php
-            file
-        }
-        rewrite @php /index.php
-
-        @static {
-            path *.css *.js *.jpg *.jpeg *.png *.gif *.ico *.svg *.woff* *.webp
-        }
-        handle @static {
-            file_server {
-                precompressed br gzip
-                hide .git .env .env.* *.php
-            }
-            header {
-                Cache-Control public, max-age=604800, immutable
-                X-Cache-Status HIT
-            }
-        }
-
-        try_files {path} /index.php?{query}
-    }
-
+    # API routes - no caching, optimized for dynamic content
     handle_path /api/* {
         header {
-            Cache-Control no-store, max-age=0
+            # Prevent caching of API responses
+            Cache-Control no-store, no-cache, must-revalidate, max-age=0
+            Pragma no-cache
+
+            # API-specific headers
+            Content-Type application/json; charset=utf-8
         }
+
+        # Laravel routing - all API requests go through index.php
         try_files {path} /index.php?{query}
     }
 
-    @admin path /admin/*
-    basicauth @admin {
-        user $2a$14$jeVulvbq/Le3GcRvFxkCq.LEutJtsnwtQ7Nu8zmgeQao.IG6WISTe
+    # Static assets with aggressive caching
+    @static {
+        path *.css *.js *.ico *.png *.jpg *.jpeg *.gif *.svg *.woff *.woff2 *.webp *.map
+        file
+    }
+    handle @static {
+        file_server {
+            # Serve precompressed files if available
+            precompressed br gzip
+
+            # Hide sensitive files
+            hide .git .env .env.* *.php composer.* artisan
+        }
+
+        header {
+            Cache-Control public, max-age=31536000, immutable
+            X-Cache-Status STATIC
+        }
     }
 
+    # Laravel's default routing - everything else goes through index.php
+    try_files {path} {path}/ /index.php?{query}
+
+    # File server for any remaining static content
+    file_server {
+        hide .git .env .env.* *.php composer.* artisan storage/logs
+    }
+
+    # Optimized logging for API monitoring
     log {
         output file /var/log/caddy/access.log {
-            roll_size 10MB
-            roll_keep 5
+            roll_size 50MB
+            roll_keep 10
+            roll_keep_for 168h  # 7 days
             roll_local_time
         }
+
+        # JSON format for better log parsing
         format json {
             time_format iso8601
+            message_key message
         }
-        level DEBUG
+
+        # Include useful fields for API monitoring
+        include http.request.method
+        include http.request.uri
+        include http.response.status
+        include http.response.size
+        include http.request.duration
+
+        level INFO
+    }
+
+    # Error handling
+    handle_errors {
+        @5xx expression {http.error.status_code} >= 500
+        handle @5xx {
+            respond Internal Server Error 500 {
+                close
+            }
+        }
+
+        @4xx expression {http.error.status_code} >= 400 && {http.error.status_code} < 500
+        handle @4xx {
+            respond Not Found 404 {
+                close
+            }
+        }
     }
 }

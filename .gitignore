@@ -3,3 +3,4 @@
 .vscode
 .env
 logs/caddy/*
+logs/php-fpm/*

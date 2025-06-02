@@ -1,28 +1,29 @@
 services:
-  caddy:
-    image: caddy:2-alpine
-    container_name: caddy
+  nginx:
+    build:
+      context: .
+      dockerfile: ./compose/nginx/Dockerfile
+    container_name: nginx
     ports:
       - "80:80"
       - "443:443"
     user: "${UID:-1000}:${GID:-1000}"
     volumes:
       - ./src:/var/www/html
-      - ./compose/caddy/Caddyfile:/etc/caddy/Caddyfile
-      - ./logs/caddy:/var/log/caddy
-      - caddy_data:/data
-      - caddy_config:/config
+      - ./compose/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./compose/nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./logs/nginx:/var/log/nginx
     depends_on:
       - php
     healthcheck:
-      test: ["CMD", "caddy", "validate", "--config", "/etc/caddy/Caddyfile"]
+      test: ["CMD", "nginx", "-t"]
       interval: 30s
       timeout: 5s
       retries: 3
     networks:
       app-network:
         aliases:
-          - php.caddy.localhost
+          - php.nginx.localhost
 
   php:
     build:
@@ -48,5 +49,4 @@ networks:
     driver: bridge
 
 volumes:
-  caddy_data:
-  caddy_config:
+  nginx_data:

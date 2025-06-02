@@ -1,0 +1,77 @@
+{
+    debug
+    auto_https off
+}
+
+php.caddy.localhost:80 {
+    root * /var/www/html/public
+    encode gzip zstd
+
+    header {
+        Server -Server
+        Strict-Transport-Security max-age=31536000
+        X-Content-Type-Options nosniff
+        X-Frame-Options DENY
+        X-XSS-Protection 1; mode=block
+        Referrer-Policy strict-origin-when-cross-origin
+        Content-Security-Policy default-src self
+    }
+
+    php_fastcgi php:9000 {
+        lb_policy ip_hash
+        root /var/www/html/public
+        resolve_root_symlink
+        health_uri /healthcheck.php
+        health_interval 30s
+        health_timeout 5s
+        health_status 200
+    }
+
+    handle {
+        @php {
+            path *.php
+            file
+        }
+        rewrite @php /index.php
+
+        @static {
+            path *.css *.js *.jpg *.jpeg *.png *.gif *.ico *.svg *.woff* *.webp
+        }
+        handle @static {
+            file_server {
+                precompressed br gzip
+                hide .git .env .env.* *.php
+            }
+            header {
+                Cache-Control public, max-age=604800, immutable
+                X-Cache-Status HIT
+            }
+        }
+
+        try_files {path} /index.php?{query}
+    }
+
+    handle_path /api/* {
+        header {
+            Cache-Control no-store, max-age=0
+        }
+        try_files {path} /index.php?{query}
+    }
+
+    @admin path /admin/*
+    basicauth @admin {
+        user $2a$14$jeVulvbq/Le3GcRvFxkCq.LEutJtsnwtQ7Nu8zmgeQao.IG6WISTe
+    }
+
+    log {
+        output file /var/log/caddy/access.log {
+            roll_size 10MB
+            roll_keep 5
+            roll_local_time
+        }
+        format json {
+            time_format iso8601
+        }
+        level DEBUG
+    }
+}

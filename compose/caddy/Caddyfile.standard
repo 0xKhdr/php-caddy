@@ -1,0 +1,14 @@
+php.caddy.localhost:80 {
+    root * /var/www/html/public
+    encode gzip
+
+    php_fastcgi php:9000
+    file_server
+
+    rewrite * /index.php?{query}
+
+    log {
+        output file /var/log/caddy/access.log
+        format json
+    }
+}
