@@ -1,1 +1,0 @@
-172.21.0.1 - - [03/Jun/2025:00:44:21 +0000] "GET /api/stress-test HTTP/1.1" 200 327 "-" "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0" "-" rt=0.149 uct="0.000" uht="0.150" urt="0.150"

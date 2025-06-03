@@ -4,6 +4,8 @@
 # Usage: ./switch-environment.sh [nginx|caddy]
 
 ENVIRONMENT=$1
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPTS_DIR="$SCRIPT_DIR"
 
 # Function to display usage
 show_usage() {
@@ -13,57 +15,57 @@ show_usage() {
     exit 1
 }
 
+# Function to check if script exists and is executable
+check_script() {
+    local script_path="$1"
+    if [[ ! -f "$script_path" ]]; then
+        echo "❌ Error: Script not found: $script_path"
+        exit 1
+    fi
+    if [[ ! -x "$script_path" ]]; then
+        echo "❌ Error: Script not executable: $script_path"
+        echo "Run: chmod +x $script_path"
+        exit 1
+    fi
+}
+
 # Function to switch to Nginx
 switch_to_nginx() {
-    echo "Switching to Nginx setup..."
+    echo "🔄 Switching to Nginx setup..."
 
-    # Stop current setup (Caddy)
-    docker compose -f docker-compose.caddy.yml down 2>/dev/null || true
+    local nginx_script="$SCRIPTS_DIR/switch-to-nginx.sh"
+    check_script "$nginx_script"
 
-    # Start Nginx setup
-    docker compose -f docker-compose.nginx.yml up -d
-
-    echo "Nginx setup started!"
-    echo "Test URL: http://php.localhost/api/stress-test"
-    echo "Logs: ./logs/nginx/"
-
-    # Wait for services
-    echo "Waiting for services to be ready..."
-    sleep 10
-
-    # Health check
-    if curl -s http://php.localhost > /dev/null; then
-        echo "✅ Nginx is healthy and ready for testing!"
+    # Execute the nginx switch script
+    if "$nginx_script"; then
+        echo "✅ Successfully switched to Nginx!"
     else
-        echo "❌ Nginx health check failed"
+        echo "❌ Failed to switch to Nginx"
+        exit 1
     fi
 }
 
 # Function to switch to Caddy
 switch_to_caddy() {
-    echo "Switching to Caddy setup..."
+    echo "🔄 Switching to Caddy setup..."
 
-    # Stop current setup (Nginx)
-    docker compose -f docker-compose.nginx.yml down 2>/dev/null || true
+    local caddy_script="$SCRIPTS_DIR/switch-to-caddy.sh"
+    check_script "$caddy_script"
 
-    # Start Caddy setup
-    docker compose -f docker-compose.caddy.yml up -d
-
-    echo "Caddy setup started!"
-    echo "Test URL: http://php.localhost/api/stress-test"
-    echo "Logs: ./logs/caddy/"
-
-    # Wait for services
-    echo "Waiting for services to be ready..."
-    sleep 10
-
-    # Health check
-    if curl -s http://php.localhost > /dev/null; then
-        echo "✅ Caddy is healthy and ready for testing!"
+    # Execute the caddy switch script
+    if "$caddy_script"; then
+        echo "✅ Successfully switched to Caddy!"
     else
-        echo "❌ Caddy health check failed"
+        echo "❌ Failed to switch to Caddy"
+        exit 1
     fi
 }
+
+# Create scripts directory if it doesn't exist
+if [[ ! -d "$SCRIPTS_DIR" ]]; then
+    echo "📁 Creating scripts directory: $SCRIPTS_DIR"
+    mkdir -p "$SCRIPTS_DIR"
+fi
 
 # Main logic
 case $ENVIRONMENT in
@@ -74,11 +76,11 @@ case $ENVIRONMENT in
         switch_to_caddy
         ;;
     "")
-        echo "Error: No environment specified"
+        echo "❌ Error: No environment specified"
         show_usage
         ;;
     *)
-        echo "Error: Invalid environment '$ENVIRONMENT'"
+        echo "❌ Error: Invalid environment '$ENVIRONMENT'"
         show_usage
         ;;
 esac

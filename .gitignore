@@ -3,4 +3,5 @@
 .vscode
 .env
 compose/logs/caddy/*
+compose/logs/nginx/*
 compose/logs/php-fpm/*
