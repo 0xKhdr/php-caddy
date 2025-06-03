@@ -22,7 +22,7 @@ services:
     networks:
       app-network:
         aliases:
-          - php.caddy.localhost
+          - php.localhost
 
   php:
     build:

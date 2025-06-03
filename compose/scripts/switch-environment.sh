@@ -24,7 +24,7 @@ switch_to_nginx() {
     docker compose -f docker-compose.nginx.yml up -d
 
     echo "Nginx setup started!"
-    echo "Test URL: http://php.nginx.localhost/api/stress-test"
+    echo "Test URL: http://php.localhost/api/stress-test"
     echo "Logs: ./logs/nginx/"
 
     # Wait for services
@@ -32,7 +32,7 @@ switch_to_nginx() {
     sleep 10
 
     # Health check
-    if curl -s http://php.nginx.localhost > /dev/null; then
+    if curl -s http://php.localhost > /dev/null; then
         echo "✅ Nginx is healthy and ready for testing!"
     else
         echo "❌ Nginx health check failed"
@@ -50,7 +50,7 @@ switch_to_caddy() {
     docker compose -f docker-compose.caddy.yml up -d
 
     echo "Caddy setup started!"
-    echo "Test URL: http://php.caddy.localhost/api/stress-test"
+    echo "Test URL: http://php.localhost/api/stress-test"
     echo "Logs: ./logs/caddy/"
 
     # Wait for services
@@ -58,7 +58,7 @@ switch_to_caddy() {
     sleep 10
 
     # Health check
-    if curl -s http://php.caddy.localhost > /dev/null; then
+    if curl -s http://php.localhost > /dev/null; then
         echo "✅ Caddy is healthy and ready for testing!"
     else
         echo "❌ Caddy health check failed"

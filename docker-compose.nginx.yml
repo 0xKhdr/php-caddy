@@ -23,7 +23,7 @@ services:
     networks:
       app-network:
         aliases:
-          - php.nginx.localhost
+          - php.localhost
 
   php:
     build:
