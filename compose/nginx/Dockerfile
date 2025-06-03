@@ -11,8 +11,8 @@ RUN apk add --no-cache curl
 RUN addgroup -g $GID -S app-group && adduser -u $UID -S app-user -G app-group
 
 # Create log directories and set permissions
-RUN mkdir -p /var/log/nginx && \
-    chown -R app-user:app-group /var/log/nginx /var/cache/nginx /var/run
+RUN mkdir -p /var/log/nginx /var/run/nginx && \
+    chown -R app-user:app-group /var/log/nginx /var/cache/nginx /var/run /var/run/nginx
 
 # Remove default config
 RUN rm /etc/nginx/conf.d/default.conf
@@ -30,3 +30,9 @@ EXPOSE 80 443
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD curl -f http://localhost/health || exit 1
+
+# Run as app-user
+USER app-user
+
+# Start nginx in foreground
+CMD ["nginx", "-g", "daemon off;"]

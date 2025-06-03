@@ -18,10 +18,10 @@ switch_to_nginx() {
     echo "Switching to Nginx setup..."
 
     # Stop current setup (Caddy)
-    docker-compose down 2>/dev/null || true
+    docker compose -f docker-compose.caddy.yml down 2>/dev/null || true
 
     # Start Nginx setup
-    docker-compose -f docker-compose.nginx.yml up -d
+    docker compose -f docker-compose.nginx.yml up -d
 
     echo "Nginx setup started!"
     echo "Test URL: http://php.nginx.localhost/api/stress-test"
@@ -44,10 +44,10 @@ switch_to_caddy() {
     echo "Switching to Caddy setup..."
 
     # Stop current setup (Nginx)
-    docker-compose -f docker-compose.nginx.yml down 2>/dev/null || true
+    docker compose -f docker-compose.nginx.yml down 2>/dev/null || true
 
     # Start Caddy setup
-    docker-compose up -d
+    docker compose -f docker-compose.caddy.yml up -d
 
     echo "Caddy setup started!"
     echo "Test URL: http://php.caddy.localhost/api/stress-test"

@@ -3,10 +3,10 @@
 echo "Switching to Caddy setup..."
 
 # Stop current setup
-docker-compose -f docker-compose.nginx.yml down 2>/dev/null || true
+docker compose -f docker-compose.nginx.yml down 2>/dev/null || true
 
 # Start Caddy setup
-docker-compose up -d
+docker compose -f docker-compose.caddy.yml up -d
 
 echo "Caddy setup started!"
 echo "Test URL: http://php.caddy.localhost/api/stress-test"

@@ -3,10 +3,10 @@
 echo "Switching to Nginx setup..."
 
 # Stop current setup
-docker-compose down 2>/dev/null || true
+docker compose down 2>/dev/null || true
 
 # Start Nginx setup
-docker-compose -f docker-compose.nginx.yml up -d
+docker compose -f docker-compose.nginx.yml up -d
 
 echo "Nginx setup started!"
 echo "Test URL: http://php.nginx.localhost/api/stress-test"
