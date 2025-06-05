@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Health Check Script
-# Usage: ./health-check.sh [nginx|caddy]
+# Usage: ./health-check.sh [nginx|caddy|frankenphp]
 
 ENVIRONMENT=$1
 MAX_RETRIES=30
@@ -9,9 +9,10 @@ RETRY_INTERVAL=2
 
 # Function to display usage
 show_usage() {
-    echo "Usage: $0 [nginx|caddy]"
+    echo "Usage: $0 [nginx|caddy|frankenphp]"
     echo "  nginx - Health check for Nginx environment"
     echo "  caddy - Health check for Caddy environment"
+    echo "  frankenphp - Health check for FrankenPHP environment"
     exit 1
 }
 
@@ -54,7 +55,7 @@ perform_health_check() {
 
 # Main logic
 case $ENVIRONMENT in
-    "nginx"|"caddy")
+    "nginx"|"caddy"|"frankenphp")
         perform_health_check "$ENVIRONMENT"
         ;;
     "")

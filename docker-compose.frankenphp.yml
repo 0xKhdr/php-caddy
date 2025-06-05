@@ -1,0 +1,27 @@
+services:
+  php:
+    build:
+      context: .
+      dockerfile: compose/frankenphp/Dockerfile
+    container_name: php
+    ports:
+      - "80:80" # HTTP
+      - "443:443" # HTTPS
+      - "443:443/udp" # HTTP/3
+    volumes:
+      - ./src:/var/www/html
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      app-network:
+        aliases:
+          - php.localhost
+
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  caddy_data:
+  caddy_config:

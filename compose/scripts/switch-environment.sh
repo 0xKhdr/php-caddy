@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # PHP Environment Switcher Script
-# Usage: ./switch-environment.sh [nginx|caddy]
+# Usage: ./switch-environment.sh [nginx|caddy|frankenphp]
 
 ENVIRONMENT=$1
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -12,6 +12,7 @@ show_usage() {
     echo "Usage: $0 [nginx|caddy]"
     echo "  nginx - Switch to Nginx PHP environment"
     echo "  caddy - Switch to Caddy PHP environment"
+    echo "  frankenphp - Switch to FrankenPHP environment"
     exit 1
 }
 
@@ -61,6 +62,22 @@ switch_to_caddy() {
     fi
 }
 
+# Function to switch to FrankenPHP
+switch_to_frankenphp() {
+    echo "🔄 Switching to FrankenPHP setup..."
+
+    local frankenphp_script="$SCRIPTS_DIR/switch-to-frankenphp.sh"
+    check_script "$frankenphp_script"
+
+    # Execute the caddy switch script
+    if "$frankenphp_script"; then
+        echo "✅ Successfully switched to FrankenPHP!"
+    else
+        echo "❌ Failed to switch to FrankenPHP"
+        exit 1
+    fi
+}
+
 # Create scripts directory if it doesn't exist
 if [[ ! -d "$SCRIPTS_DIR" ]]; then
     echo "📁 Creating scripts directory: $SCRIPTS_DIR"
@@ -74,6 +91,9 @@ case $ENVIRONMENT in
         ;;
     "caddy")
         switch_to_caddy
+        ;;
+    "frankenphp")
+        switch_to_frankenphp
         ;;
     "")
         echo "❌ Error: No environment specified"

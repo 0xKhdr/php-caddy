@@ -10,7 +10,11 @@ echo "🔧 Starting Nginx environment setup..."
 
 # Stop current setup (Caddy)
 echo "⏹️  Stopping Caddy setup..."
-docker compose -f "$PROJECT_ROOT/docker-compose.caddy.yml" down 2>/dev/null || true
+docker compose -f "$PROJECT_ROOT/docker-compose.caddy.yml" down -v 2>/dev/null || true
+
+# Stop current setup (FrankenPHP)
+echo "⏹️  Stopping FrankenPHP setup..."
+docker compose -f "$PROJECT_ROOT/docker-compose.frankenphp.yml" down -v 2>/dev/null || true
 
 # Clean up any orphaned containers
 echo "🧹 Cleaning up orphaned containers..."
@@ -18,7 +22,7 @@ docker compose -f "$PROJECT_ROOT/docker-compose.nginx.yml" down --remove-orphans
 
 # Start Nginx setup
 echo "🚀 Starting Nginx setup..."
-if ! docker compose -f "$PROJECT_ROOT/docker-compose.nginx.yml" up -d; then
+if ! docker compose -f "$PROJECT_ROOT/docker-compose.nginx.yml" up -d --build; then
     echo "❌ Failed to start Nginx setup"
     exit 1
 fi
